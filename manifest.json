@@ -1,0 +1,8 @@
+{
+  "name": "frontend-react-tanstack",
+  "version": "1.0.0",
+  "description": "Plugin para projetos frontend com React 19 + TanStack Router + TanStack Query + Kubb + Tailwind CSS + shadcn/ui + Zustand. Gera código type-safe a partir do OpenAPI spec do backend.",
+  "skills": "skills",
+  "commands": "commands",
+  "agents": "agents"
+}
