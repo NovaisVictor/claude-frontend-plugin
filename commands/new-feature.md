@@ -1,4 +1,8 @@
-Criar estrutura de uma nova feature no frontend. Nome da feature em $ARGUMENTS (kebab-case, e.g. `products`).
+---
+description: "Criar estrutura de uma nova feature no frontend: página + componente principal integrado com hooks do Kubb."
+---
+
+Criar estrutura de uma nova feature. Nome da feature em $ARGUMENTS (kebab-case, e.g. `products`).
 
 ## Nomes derivados
 
@@ -64,6 +68,7 @@ Atualizar `src/components/layout/tabs.tsx` com link pra nova feature.
 ## Próximos passos
 
 Informar ao usuário:
+
 1. Criar componentes específicos (card, form, delete dialog) dentro de `src/components/{feature}/`
 2. Verificar se a página precisa de proteção com `auth` no `beforeLoad`
 3. Adicionar navegação no layout

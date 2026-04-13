@@ -1,7 +1,10 @@
 {
   "name": "claude-frontend-plugin",
   "version": "1.0.0",
-  "description": "Plugin para projetos frontend com React 19 + TanStack Router + TanStack Query + Kubb + Tailwind CSS + shadcn/ui + Zustand.",
+  "description": "Plugin para projetos frontend...",
+  "author": {
+    "name": "Victor Novais"
+  },
   "skills": "./skills",
   "commands": "./commands",
   "agents": ["./agents/frontend-reviewer.md"]
