@@ -4,5 +4,5 @@
   "description": "Plugin para projetos frontend com React 19 + TanStack Router + TanStack Query + Kubb + Tailwind CSS + shadcn/ui + Zustand.",
   "skills": "./skills",
   "commands": "./commands",
-  "agents": "./agents"
+  "agents": ["./agents/frontend-reviewer.md"]
 }

@@ -1,3 +1,7 @@
+---
+description: "Configurar Kubb num projeto frontend existente com React + TanStack Query."
+---
+
 Configurar Kubb num projeto frontend existente com React + TanStack Query.
 
 ## Pré-requisitos
@@ -24,6 +28,7 @@ Seguir o padrão da skill `api-client`.
 ### 4. Adicionar variável de ambiente
 
 Em `.env`:
+
 ```env
 VITE_API_URL=http://localhost:3333
 ```
