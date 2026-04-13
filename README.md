@@ -2,10 +2,18 @@
 
 Plugin para projetos frontend com **React 19 + TanStack Router + TanStack Query + Kubb + Tailwind CSS + shadcn/ui + Zustand**.
 
-## Instalação do plugin
+## Instalação
+
+### 1. Adicionar o marketplace (apenas na primeira vez)
 
 ```bash
-claude plugin install github:NovaisVictor/claude-frontend-plugin
+claude plugin marketplace add NovaisVictor/claude-marketplace
+```
+
+### 2. Instalar o plugin
+
+```bash
+claude plugin install claude-frontend-plugin@novais-plugins
 ```
 
 ---
@@ -59,7 +67,7 @@ bun add -D @biomejs/biome
 
 ### 3. Configurar Biome
 
-Criar `biome.json` na raiz (ou substituir o ESLint config existente):
+Criar `biome.json` na raiz:
 
 ```json
 {
@@ -187,7 +195,7 @@ export const authClient = createAuthClient({
 
 ### 7. Configurar TanStack Query provider
 
-Criar `src/integrations/tanstack-query/root-provider.tsx` (se o scaffold não criou):
+Criar `src/integrations/tanstack-query/root-provider.tsx`:
 
 ```typescript
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -283,9 +291,7 @@ Adicionar ao `.gitignore`:
 src/gen/
 ```
 
-### 10. Estrutura de pastas
-
-Criar as pastas restantes:
+### 10. Criar estrutura de pastas
 
 ```bash
 mkdir -p src/components/ui src/components/layout src/components/theme src/hooks src/stores
