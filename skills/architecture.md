@@ -42,11 +42,16 @@ src/
     layout/                         ← header, tabs, logo, sidebar
     theme/                          ← theme provider, toggle
     {feature}/                      ← componentes da feature (só componentes)
-  hooks/                            ← hooks customizados
+  hooks/                            ← hooks GLOBAIS (cross-cutting: auth, org, media)
   stores/                           ← Zustand stores
   pages/                            ← TanStack Router file-based routes
     __root.tsx                      ← Root layout
     _app/                           ← Dashboard layout (auth required)
+      {feature}/
+        index.tsx                   ← rota
+        -components/                ← componentes específicos da feature
+        -hooks/                     ← hooks específicos da feature
+        -types.ts                   ← tipos derivados (z.infer)
     _auth/                          ← Auth layout (público)
 ```
 
@@ -59,11 +64,21 @@ src/
 - Pasta de feature (`banners/`) só se justifica com 3+ componentes. Componente isolado fica solto.
 - `ui/` é exclusivamente shadcn — nunca colocar lógica de negócio ali.
 
-### hooks/
+### hooks/ (global)
 
-- Hooks customizados ficam aqui, separados dos componentes.
-- Hooks genéricos: `use-debounce.ts`, `use-media-query.ts`
-- Hooks de feature: `use-banner-filters.ts`
+- Apenas hooks **cross-cutting**: auth (`use-auth.ts`), organization (`use-organization-mutations.ts`), media queries (`use-media-query.ts`), debounce.
+- Hooks específicos de feature **NÃO** ficam aqui — vão para `pages/_app/{feature}/-hooks/`.
+- Regra: se o hook só faz sentido dentro de uma feature, é local. Se é usado por múltiplas features ou é infraestrutura, é global.
+
+### Co-location por feature
+
+Cada feature em `pages/_app/{feature}/` agrupa:
+
+- `-components/` — componentes específicos (cards, forms, dialogs).
+- `-hooks/` — hooks específicos (filtros locais, wrappers de bulk operations).
+- `-types.ts` — tipos derivados via `z.infer<typeof xxxSchema>` dos schemas Kubb.
+
+Prefixo `-` segue convenção do TanStack Router para arquivos não-roteáveis.
 
 ### stores/
 

@@ -7,9 +7,9 @@ Criar estrutura de uma nova feature. Nome da feature em $ARGUMENTS (kebab-case, 
 ## Nomes derivados
 
 - Feature: kebab-case → `products`
-- Pasta componentes: `src/components/{feature}/`
 - Página: `src/pages/_app/{feature}/index.tsx`
-- Hooks: verificar `src/gen/hooks/{feature}-hooks/`
+- Co-location: `src/pages/_app/{feature}/-components/`, `-hooks/`, `-types.ts`
+- Hooks Kubb: verificar `src/gen/hooks/{feature}-hooks/`
 
 ## Passos
 
@@ -23,7 +23,7 @@ Checar se existem hooks em `src/gen/hooks/{feature}-hooks/`. Se não existirem, 
 
 ```typescript
 import { createFileRoute } from '@tanstack/react-router'
-import { {Feature}List } from '@/components/{feature}/{feature}-list'
+import { {Feature}List } from './-components/{feature}-list'
 
 export const Route = createFileRoute('/_app/{feature}/')({
   component: {Feature}Page,
@@ -41,7 +41,7 @@ function {Feature}Page() {
 
 ### 3. Criar componente principal
 
-`src/components/{feature}/{feature}-list.tsx`:
+`src/pages/_app/{feature}/-components/{feature}-list.tsx`:
 
 ```typescript
 import { useGet{Feature}s } from '@/gen/hooks/{feature}-hooks'
@@ -61,7 +61,17 @@ export function {Feature}List() {
 }
 ```
 
-### 4. Adicionar tab de navegação (se necessário)
+### 4. (Opcional) Form de criação com mutation
+
+Quando a feature inclui form, seguir o padrão da skill `form-patterns`:
+
+- Schema Zod + `z.infer` em `-types.ts`
+- React Hook Form com `zodResolver`
+- `setError('root')` no `onError` da mutation
+- `meta.invalidates: [getGet{Feature}sQueryKey()]` + `meta.successMessage` (skill `tanstack-query`)
+- `useId()` para IDs de Input/Label
+
+### 5. Adicionar tab de navegação (se necessário)
 
 Atualizar `src/components/layout/tabs.tsx` com link pra nova feature.
 
@@ -69,6 +79,8 @@ Atualizar `src/components/layout/tabs.tsx` com link pra nova feature.
 
 Informar ao usuário:
 
-1. Criar componentes específicos (card, form, delete dialog) dentro de `src/components/{feature}/`
-2. Verificar se a página precisa de proteção com `auth` no `beforeLoad`
-3. Adicionar navegação no layout
+1. Criar componentes específicos em `-components/` (card, form, delete dialog)
+2. Hooks específicos em `-hooks/`, tipos derivados em `-types.ts`
+3. Verificar se a página precisa de proteção com `auth` no `beforeLoad`
+4. Adicionar navegação no layout
+5. Em mutations, sempre usar `meta.invalidates` + `meta.successMessage` (não wrapper trivial)

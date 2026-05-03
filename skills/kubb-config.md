@@ -7,7 +7,7 @@ description: "Configuração do Kubb para geração de código a partir do OpenA
 ## Dependências
 
 ```bash
-npm install -D @kubb/core @kubb/plugin-oas @kubb/plugin-ts @kubb/plugin-react-query @kubb/plugin-zod @kubb/plugin-client
+bun add -d @kubb/core @kubb/plugin-oas @kubb/plugin-ts @kubb/plugin-react-query @kubb/plugin-zod @kubb/plugin-client
 ```
 
 ## kubb.config.ts
@@ -125,9 +125,11 @@ Adicionar ao `package.json`:
 ## Usando os hooks gerados
 
 ```typescript
-import { useGetProducts } from '@/gen/hooks/products-hooks'
-import { useCreateProduct } from '@/gen/hooks/products-hooks'
-import type { Product } from '@/gen/models'
+import { useGetProducts, useCreateProduct, getGetProductsQueryKey } from '@/gen/hooks/products-hooks'
+import { z } from 'zod'
+import { getProductResponseSchema } from '@/gen/zod'
+
+type Product = z.infer<typeof getProductResponseSchema>
 
 function ProductsList() {
   const { data: products, isLoading } = useGetProducts()
@@ -136,6 +138,13 @@ function ProductsList() {
   // types, loading states, cache — tudo automático
 }
 ```
+
+## Imports permitidos
+
+- `@/gen/hooks/*` ✅ — primeira opção para qualquer endpoint OpenAPI.
+- `@/gen/zod/*` ✅ — derive tipos via `z.infer<typeof xxxSchema>`.
+- `@/gen/models/*` ❌ **PROIBIDO** — interno do Kubb, sujeito a renomeações entre versões.
+- Manual `useQuery`/`useMutation` apenas para BetterAuth SDK (não está na OpenAPI spec — ver skill `auth-client`).
 
 ## Custom client (importPath)
 
