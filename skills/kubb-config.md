@@ -29,7 +29,7 @@ function toKebabCase(str: string): string {
 export default defineConfig({
   root: '.',
   input: {
-    path: 'http://localhost:3333/openapi/json',
+    path: 'http://localhost:8080/openapi/json',
   },
   output: {
     path: './src/gen',
@@ -97,8 +97,8 @@ src/gen/
 ## Comandos
 
 ```bash
-npx kubb generate            # Gerar uma vez
-npx kubb generate --watch    # Watch mode (dev)
+bun run generate           # Gerar uma vez
+bun run generate --watch   # Watch mode (dev)
 ```
 
 Adicionar ao `package.json`:
@@ -106,8 +106,7 @@ Adicionar ao `package.json`:
 ```json
 {
   "scripts": {
-    "api:generate": "kubb generate",
-    "api:watch": "kubb generate --watch"
+    "generate": "kubb generate"
   }
 }
 ```

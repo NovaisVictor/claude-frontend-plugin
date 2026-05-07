@@ -15,9 +15,17 @@ Criar estrutura de uma nova feature. Nome da feature em $ARGUMENTS (kebab-case, 
 
 ### 1. Verificar hooks gerados
 
-Checar se existem hooks em `src/gen/hooks/{feature}-hooks/`. Se não existirem, avisar que o backend precisa expor a tag no OpenAPI e regerar com `npm run api:generate`.
+Checar se existem hooks em `src/gen/hooks/{feature}-hooks/`. Se não existirem, avisar que o backend precisa expor a tag no OpenAPI e regerar com `bun run generate`.
 
-### 2. Criar página
+### 2. Decidir org-scoped vs single-tenant
+
+Se a feature é multi-tenant (recursos pertencem a uma organização), criar em `src/pages/_app/$orgSlug/{feature}/` e extrair `orgSlug` via `useParams({ from: '/_app/$orgSlug' })`.
+
+Se single-tenant (recursos globais ou do user), criar em `src/pages/_app/{feature}/`.
+
+A decisão deve casar com o backend: rotas que usam `activeOrg: true` no Elysia → frontend org-scoped.
+
+### 3. Criar página (single-tenant)
 
 `src/pages/_app/{feature}/index.tsx`:
 
@@ -38,6 +46,30 @@ function {Feature}Page() {
   )
 }
 ```
+
+### 3b. Criar página (multi-tenant)
+
+`src/pages/_app/$orgSlug/{feature}/index.tsx`:
+
+```typescript
+import { createFileRoute } from '@tanstack/react-router'
+import { {Feature}List } from './-components/{feature}-list'
+
+export const Route = createFileRoute('/_app/$orgSlug/{feature}/')({
+  component: {Feature}Page,
+})
+
+function {Feature}Page() {
+  return (
+    <div className="w-full">
+      <h1 className="text-2xl font-bold mb-4 md:mb-6">{Feature}</h1>
+      <{Feature}List />
+    </div>
+  )
+}
+```
+
+A query `useGet{Feature}s()` (Kubb) já bate em endpoint `activeOrg: true` no backend — o `organizationId` vem da sessão, não precisa passar como param.
 
 ### 3. Criar componente principal
 
@@ -73,7 +105,7 @@ Quando a feature inclui form, seguir o padrão da skill `form-patterns`:
 
 ### 5. Adicionar tab de navegação (se necessário)
 
-Atualizar `src/components/layout/tabs.tsx` com link pra nova feature.
+Atualizar `src/components/layout/app-sidebar.tsx` com link pra nova feature. Em multi-tenant, usar `linkOptions` com `params: { orgSlug }`.
 
 ## Próximos passos
 
@@ -81,6 +113,7 @@ Informar ao usuário:
 
 1. Criar componentes específicos em `-components/` (card, form, delete dialog)
 2. Hooks específicos em `-hooks/`, tipos derivados em `-types.ts`
-3. Verificar se a página precisa de proteção com `auth` no `beforeLoad`
-4. Adicionar navegação no layout
-5. Em mutations, sempre usar `meta.invalidates` + `meta.successMessage` (não wrapper trivial)
+3. Em mutations, sempre usar `meta.invalidates` + `meta.successMessage` (não wrapper trivial)
+4. IDs de Input/Label sempre via `useId()` (Biome enforça)
+5. Para features multi-tenant, nunca passar `organizationId` no payload — vem da sessão via macro `activeOrg` no backend
+6. Adicionar navegação no `app-sidebar.tsx` (com `params: { orgSlug }` se multi-tenant)

@@ -1,6 +1,6 @@
 # claude-frontend-plugin
 
-Plugin para projetos frontend com **React 19 + TanStack Router + TanStack Query + Kubb + Tailwind CSS + shadcn/ui + Zustand**.
+Plugin para projetos frontend com **React 19 + TanStack Router + TanStack Query + Kubb + Tailwind CSS + shadcn/ui + Zustand + BetterAuth**.
 
 ## Instalação
 
@@ -15,6 +15,19 @@ claude plugin marketplace add NovaisVictor/claude-marketplace
 ```bash
 claude plugin install claude-frontend-plugin@novais-plugins
 ```
+
+---
+
+## O que muda na v1.2.0
+
+- **Nova skill `organization-frontend.md`** — multi-tenant no front: `_app/$orgSlug/` routing, hooks `useOrganizations`/`useActiveOrganization`, `OrganizationSwitcher`, redirect `/no-organization`, gate de 2FA setup, página `setup-2fa.tsx` com 3 etapas.
+- **Skill `component-patterns.md`** ganhou seção **Theme dark/light** (ThemeProvider customizado, `localStorage` `'ui-theme'`, `ThemeToggle`).
+- **`auth-client.md`**: `beforeLoad` agora usa `authClient.getSession()` (em vez de `fetch` direto).
+- **Padronização `bun run`**: `kubb-config`, `setup-kubb` e `new-feature` agora usam `bun run generate` em vez de `npx`/`npm run api:generate`.
+- **Porta default 8080** em todos os exemplos (alinha com `claude-backend-plugin` v1.2.0).
+- **`frontend-reviewer.md`** ganhou checks de multi-tenant: rota fora de `_app/$orgSlug/`, falta de `useParams({ from: '/_app/$orgSlug' })`, mutation de org sem invalidação de session, gate de 2FA ausente.
+- **`new-feature` command** suporta variante org-scoped (`_app/$orgSlug/{feature}/`).
+- `architecture.md` documenta a estrutura completa de pastas multi-tenant + setup-2fa standalone.
 
 ---
 
@@ -52,6 +65,9 @@ bun add axios
 # State management
 bun add zustand immer
 
+# Forms
+bun add react-hook-form @hookform/resolvers zod
+
 # shadcn/ui (seguir setup do shadcn para Vite + Tailwind)
 bunx shadcn@latest init
 
@@ -75,8 +91,8 @@ Criar `biome.json` na raiz:
   "files": {
     "includes": [
       "**/src/**/*",
-      "!**/src/routeTree.gen.ts",
-      "!**/src/gen/**",
+      "!**/src/route-tree.gen.ts",
+      "!**/src/gen",
       "!**/src/styles.css"
     ]
   },
@@ -119,7 +135,7 @@ function toKebabCase(str: string): string {
 export default defineConfig({
   root: ".",
   input: {
-    path: "http://localhost:3333/openapi/json",
+    path: "http://localhost:8080/openapi/json",
   },
   output: {
     path: "./src/gen",
@@ -193,83 +209,69 @@ export const authClient = createAuthClient({
 });
 ```
 
-### 7. Configurar TanStack Query provider
+### 7. Configurar TanStack Query provider com `MutationCache` central
 
 Criar `src/integrations/tanstack-query/root-provider.tsx`:
 
 ```typescript
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MutationCache, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { Toaster, toast } from 'sonner'
 import type { ReactNode } from 'react'
 
-const queryClient = new QueryClient()
+export const queryClient = new QueryClient({
+  mutationCache: new MutationCache({
+    onSuccess: (_data, _variables, _context, mutation) => {
+      const { invalidates, successMessage } = mutation.meta ?? {}
+      if (invalidates?.length) {
+        for (const queryKey of invalidates) {
+          queryClient.invalidateQueries({ queryKey })
+        }
+      }
+      if (successMessage) toast.success(successMessage)
+    },
+    onError: (error, _variables, _context, mutation) => {
+      const { errorMessage } = mutation.meta ?? {}
+      if (errorMessage === false) return
+      toast.error(typeof errorMessage === 'string' ? errorMessage : (error as Error).message)
+    },
+  }),
+})
 
-export function getContext() {
-  return { queryClient }
-}
-
-export function Provider({
-  queryClient,
-  children,
-}: {
-  queryClient: QueryClient
-  children: ReactNode
-}) {
+export function Provider({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       {children}
+      <Toaster />
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   )
 }
 ```
 
-### 8. Ajustar main.tsx
+E `src/integrations/tanstack-query/mutation-meta.d.ts`:
 
 ```typescript
-import { createRouter, RouterProvider } from '@tanstack/react-router'
-import { StrictMode } from 'react'
-import ReactDOM from 'react-dom/client'
-import * as TanStackQueryProvider from './integrations/tanstack-query/root-provider.tsx'
-import { routeTree } from './route-tree.gen.ts'
-import './styles.css'
+import '@tanstack/react-query'
 
-const TanStackQueryProviderContext = TanStackQueryProvider.getContext()
-
-const router = createRouter({
-  routeTree,
-  context: { ...TanStackQueryProviderContext },
-  defaultPreload: 'intent',
-  scrollRestoration: true,
-  defaultStructuralSharing: true,
-  defaultPreloadStaleTime: 0,
-})
-
-declare module '@tanstack/react-router' {
+declare module '@tanstack/react-query' {
   interface Register {
-    router: typeof router
+    mutationMeta: {
+      invalidates?: readonly unknown[][]
+      successMessage?: string
+      errorMessage?: string | false
+    }
   }
-}
-
-const rootElement = document.getElementById('app')
-if (rootElement && !rootElement.innerHTML) {
-  const root = ReactDOM.createRoot(rootElement)
-  root.render(
-    <StrictMode>
-      <TanStackQueryProvider.Provider {...TanStackQueryProviderContext}>
-        <RouterProvider router={router} />
-      </TanStackQueryProvider.Provider>
-    </StrictMode>,
-  )
 }
 ```
 
-### 9. Adicionar variáveis de ambiente e scripts
+### 8. Adicionar variáveis de ambiente e scripts
 
 **.env**
 
 ```env
-VITE_API_URL=http://localhost:3333
+VITE_API_URL=http://localhost:8080
+VITE_APP_URL=http://localhost:3000
 ```
 
 No `package.json`, adicionar:
@@ -277,8 +279,7 @@ No `package.json`, adicionar:
 ```json
 {
   "scripts": {
-    "api:generate": "kubb generate",
-    "api:watch": "kubb generate --watch",
+    "generate": "kubb generate",
     "lint": "bunx biome check .",
     "lint:fix": "bunx biome check --write ."
   }
@@ -291,22 +292,30 @@ Adicionar ao `.gitignore`:
 src/gen/
 ```
 
-### 10. Criar estrutura de pastas
+### 9. Criar estrutura de pastas
 
 ```bash
-mkdir -p src/components/ui src/components/layout src/components/theme src/hooks src/stores
+mkdir -p \
+  src/components/ui \
+  src/components/layout \
+  src/components/theme \
+  src/hooks \
+  src/stores \
+  src/integrations/tanstack-query \
+  src/integrations/better-auth \
+  src/lib
 ```
 
-### 11. Iniciar
+### 10. Iniciar
 
 ```bash
 bun run dev
 ```
 
-Quando o backend estiver rodando, gerar os hooks:
+Quando o backend estiver rodando em `VITE_API_URL`, gerar os hooks:
 
 ```bash
-bun run api:generate
+bun run generate
 ```
 
 ---
@@ -315,26 +324,28 @@ bun run api:generate
 
 ### Skills
 
-| Skill                | Ativada quando                                               |
-| -------------------- | ------------------------------------------------------------ |
-| `architecture`       | Decisões de estrutura, organização de pastas, fluxo de dados |
-| `kubb-config`        | Configurar Kubb, regerar código, entender output             |
-| `tanstack-router`    | File-based routing, layouts, pathless groups                 |
-| `tanstack-query`     | Provider, hooks gerados, cache, invalidação                  |
-| `api-client`         | Axios config, interceptors, cookies                          |
-| `auth-client`        | BetterAuth client no React, session, proteção de rotas       |
-| `zustand-patterns`   | Stores, selectors, Immer middleware                          |
-| `component-patterns` | Organização de componentes, props, shadcn/ui                 |
+| Skill                   | Ativada quando                                                          |
+| ----------------------- | ----------------------------------------------------------------------- |
+| `architecture`          | Decisões de estrutura, organização de pastas, fluxo de dados            |
+| `kubb-config`           | Configurar Kubb, regerar código, entender output                        |
+| `tanstack-router`       | File-based routing, layouts, pathless groups                            |
+| `tanstack-query`        | MutationCache central com `meta.invalidates`/`successMessage`           |
+| `api-client`            | Axios config, interceptors, cookies                                     |
+| `auth-client`           | BetterAuth client no React, `useSession`, `beforeLoad`                  |
+| `zustand-patterns`      | Stores, selectors, Immer middleware                                     |
+| `component-patterns`    | Organização de componentes, props, shadcn/ui, **Theme dark/light**      |
+| `form-patterns`         | Zod + RHF + `setError('root')` + `useId()`                              |
+| `organization-frontend` | Multi-tenant: `_app/$orgSlug/`, switcher, 2FA setup gate, `setup-2fa.tsx` |
 
 ### Commands
 
-| Command                 | Uso                                                     |
-| ----------------------- | ------------------------------------------------------- |
-| `/setup-kubb`           | Configurar Kubb do zero                                 |
-| `/new-feature products` | Criar página + componente principal integrado com hooks |
+| Command                 | Uso                                                          |
+| ----------------------- | ------------------------------------------------------------ |
+| `/setup-kubb`           | Configurar Kubb do zero (porta 8080, `bun run generate`)     |
+| `/new-feature products` | Criar página + componente principal (single-tenant ou org-scoped) |
 
 ### Agents
 
-| Agent               | Função                                                  |
-| ------------------- | ------------------------------------------------------- |
-| `frontend-reviewer` | Review de componentes, state, routing, auth (read-only) |
+| Agent               | Função                                                              |
+| ------------------- | ------------------------------------------------------------------- |
+| `frontend-reviewer` | Review de componentes, state, routing, auth, mutations, multi-tenant |

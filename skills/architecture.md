@@ -47,12 +47,24 @@ src/
   pages/                            ← TanStack Router file-based routes
     __root.tsx                      ← Root layout
     _app/                           ← Dashboard layout (auth required)
-      {feature}/
-        index.tsx                   ← rota
-        -components/                ← componentes específicos da feature
-        -hooks/                     ← hooks específicos da feature
-        -types.ts                   ← tipos derivados (z.infer)
+      layout.tsx                    ← gate: auth + 2FA setup
+      setup-2fa.tsx                 ← Standalone (gate quando 2FA não configurado)
+      settings/                     ← Settings do USUÁRIO (profile, security)
+      {feature}/                    ← Single-tenant features
+        index.tsx
+        -components/
+        -hooks/
+        -types.ts
+      $orgSlug/                     ← Multi-tenant — só com plugin organization()
+        layout.tsx                  ← extrai orgSlug
+        {feature}/                  ← features org-scoped
+          index.tsx
+          -components/
+          -hooks/
+          -types.ts
+        settings/                   ← Settings da ORG (members, invitations)
     _auth/                          ← Auth layout (público)
+    invite/$invitationId.tsx        ← Aceitar convite (público)
 ```
 
 ## Regras de organização
@@ -95,7 +107,7 @@ Prefixo `-` segue convenção do TanStack Router para arquivos não-roteáveis.
 ### gen/
 
 - Gerado pelo Kubb a partir do OpenAPI spec do backend.
-- NUNCA editar manualmente. Regerar com `npx kubb generate`.
+- NUNCA editar manualmente. Regerar com `bun run generate`.
 - Types de API vêm de `gen/models/`, hooks de `gen/hooks/`.
 
 ### integrations/

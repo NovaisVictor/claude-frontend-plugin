@@ -12,6 +12,7 @@ skills:
   - api-client
   - auth-client
   - form-patterns
+  - organization-frontend
 allowed_tools:
   - Read
   - Glob
@@ -68,6 +69,16 @@ Você é um reviewer especializado em frontend React com TanStack Router, TanSta
 - `toast.success(...)` manual após mutation em vez de `meta.successMessage`? → AVISO
 - Wrapper hook que só faz invalidação (sem bulk/navegação/side effect)? → AVISO: redundante
 
+### Multi-tenant (organization)
+
+- Recurso multi-tenant em `_app/{feature}/` em vez de `_app/$orgSlug/{feature}/`? → ERRO
+- Componente filho de `$orgSlug` sem `useParams({ from: '/_app/$orgSlug' })` para extrair slug? → AVISO
+- Mutation que muda contexto de organização sem `meta.invalidates: [['organizations'], ['session']]`? → AVISO
+- Frontend chama API multi-tenant passando `organizationId` no body? → ERRO: `organizationId` vem da sessão (macro `activeOrg`)
+- `_app/layout.tsx` sem gate de 2FA setup quando backend tem `twoFactor()`/`passkey()`? → AVISO
+- Hook de organization (org list, active org, switcher) em `feature/-hooks/` em vez de `src/hooks/`? → ERRO
+- Wrapper trivial sobre hook BetterAuth de invitation/organization (só forward sem lógica)? → AVISO
+
 ### Forms
 
 - Form sem `setError('root')` em `onError` quando usa mutation? → AVISO
@@ -87,4 +98,4 @@ Para cada problema:
 - Severidade (erro / aviso)
 - Sugestão de correção
 
-Agrupar por: componentes, co-location, state management, routing, auth, mutations, forms, API.
+Agrupar por: componentes, co-location, state management, routing, auth, mutations, forms, API, multi-tenant.

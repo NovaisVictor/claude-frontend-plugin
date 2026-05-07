@@ -69,24 +69,26 @@ const handleSignOut = async () => {
 
 ## Proteção de rotas no frontend
 
-No layout `_app/layout.tsx`, verificar session e redirecionar:
+No layout `_app/layout.tsx`, verificar session via `authClient.getSession()` e redirecionar:
 
 ```typescript
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
+import { authClient } from '@/integrations/better-auth/auth-client'
 
 export const Route = createFileRoute('/_app')({
   beforeLoad: async () => {
-    // Verificar session no servidor antes de renderizar
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/get-session`, {
-      credentials: 'include',
+    const { data: session } = await authClient.getSession({
+      fetchOptions: { credentials: 'include' },
     })
-    if (!response.ok) {
+    if (!session) {
       throw redirect({ to: '/sign-in' })
     }
   },
   component: DashboardLayout,
 })
 ```
+
+Quando o backend tem `twoFactor()` ou `passkey()` ativos, adicionar o gate de 2FA setup também aqui — ver skill `organization-frontend`.
 
 ## Regras
 

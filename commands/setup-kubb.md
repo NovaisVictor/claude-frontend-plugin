@@ -13,8 +13,8 @@ Verificar que o projeto tem: React, TanStack React Query, Vite, Biome.
 ### 1. Instalar dependências
 
 ```bash
-npm install axios
-npm install -D @kubb/core @kubb/plugin-oas @kubb/plugin-ts @kubb/plugin-react-query @kubb/plugin-zod @kubb/plugin-client
+bun add axios
+bun add -D @kubb/core @kubb/plugin-oas @kubb/plugin-ts @kubb/plugin-react-query @kubb/plugin-zod @kubb/plugin-client
 ```
 
 ### 2. Criar kubb.config.ts
@@ -30,7 +30,7 @@ Seguir o padrão da skill `api-client`.
 Em `.env`:
 
 ```env
-VITE_API_URL=http://localhost:3333
+VITE_API_URL=http://localhost:8080
 ```
 
 ### 5. Adicionar scripts ao package.json
@@ -38,8 +38,7 @@ VITE_API_URL=http://localhost:3333
 ```json
 {
   "scripts": {
-    "api:generate": "kubb generate",
-    "api:watch": "kubb generate --watch"
+    "generate": "kubb generate"
   }
 }
 ```
@@ -56,8 +55,10 @@ Incluir `!**/src/gen/**` nos files includes pra ignorar código gerado.
 
 ### 8. Gerar código
 
+Com o backend rodando em `VITE_API_URL`:
+
 ```bash
-npm run api:generate
+bun run generate
 ```
 
 ### Próximos passos
